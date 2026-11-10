@@ -10,10 +10,10 @@ You will create: a GitHub account, a Cloudflare account, a Google Sheet, and a t
 1. Sign in to the Google account that should own the orders. Create a new Google Sheet. Name it **House of Iyengars Orders**.
 2. Open **Extensions → Apps Script**. Delete the sample code. Open `apps-script/Code.gs` from this folder, copy everything, paste it in, and click **Save**.
 3. Make up a long secret word (at least 32 random letters and numbers). Keep it safe. You will use it twice.
-4. In Apps Script click the **gear (Project Settings)**, scroll to **Script properties → Add script property**. Name: `API_SECRET`. Value: your secret word. Save.
+4. In Apps Script, open Project Settings > Script Properties. Configure the API_SECRET property using your private credential. Save.
 5. Choose the function **setup** in the toolbar and click **Run**. Approve the permissions (Google may say the app is unverified. Choose Advanced → Go to project). This creates the Orders and Audit tabs, the status dropdowns, locks the order-data columns, and starts the automatic jobs (audit log, 30-minute handoff check, weekly backup).
 6. Click **Deploy → New deployment → Web app**. Set **Execute as: Me** and **Who has access: Anyone**. Click Deploy and copy the **Web app URL**.
-   - "Anyone" only means the address can be reached. Every request must carry your secret word, so strangers cannot use it.
+Web app access is public, but requests require server-side authentication.
 7. Open that URL in a browser. You should see `{"ok":true,"service":"House of Iyengars order register","status":"running"}`.
 8. **Whenever you change `Code.gs` later:** Deploy → Manage deployments → pencil → Version: New version → Deploy.
 
@@ -40,9 +40,9 @@ Do not use your live site for testing.
 
 | Name | Value |
 |---|---|
-| `APPS_SCRIPT_URL` | the Web app URL from Part 1 |
-| `APPS_SCRIPT_SECRET` | your secret word from Part 1 |
-| `TURNSTILE_SECRET` | the Cloudflare **Secret key** |
+| APPS_SCRIPT_URL | Google Apps Script Web App URL from Part 1 |
+| APPS_SCRIPT_SECRET | Configure privately in Netlify Environment Variables |
+| TURNSTILE_SECRET | Configure privately in Netlify Environment Variables |
 
 4. Deploy. Netlify gives you an address like `something.netlify.app`. Add it to the Turnstile widget (Part 2, step 2) if you have not yet.
 5. Open the site. Under **Logs → Functions** you should see `order`, `handoff` and `retry-pending`.
