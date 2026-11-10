@@ -1,0 +1,102 @@
+{
+ "version": 1,
+ "currency": "INR",
+ "items": [
+  {
+   "id": "m1",
+   "name": "Puliyodhare",
+   "size": "500 g / 750 ml",
+   "price": 250,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m1.webp",
+   "w": 360,
+   "h": 209,
+   "available": true
+  },
+  {
+   "id": "m2",
+   "name": "Kadagore",
+   "size": "500 g / 750 ml",
+   "price": 250,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m2.webp",
+   "w": 360,
+   "h": 216,
+   "available": true
+  },
+  {
+   "id": "m3",
+   "name": "Yellore",
+   "size": "500 g / 750 ml",
+   "price": 250,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m3.webp",
+   "w": 360,
+   "h": 213,
+   "available": true
+  },
+  {
+   "id": "m4",
+   "name": "Vaangibath",
+   "size": "500 g / 750 ml",
+   "price": 250,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m4.webp",
+   "w": 360,
+   "h": 209,
+   "available": true
+  },
+  {
+   "id": "m5",
+   "name": "Pongal",
+   "size": "500 g / 750 ml",
+   "price": 250,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m5.webp",
+   "w": 360,
+   "h": 216,
+   "available": true
+  },
+  {
+   "id": "m6",
+   "name": "Curd Rice",
+   "size": "500 g / 750 ml",
+   "price": 200,
+   "group": "rice",
+   "g": 0,
+   "image": "img/m6.webp",
+   "w": 360,
+   "h": 213,
+   "available": true
+  },
+  {
+   "id": "m7",
+   "name": "Hayagreeva",
+   "size": "350 g / 300 ml",
+   "price": 230,
+   "group": "sweets",
+   "g": 1,
+   "image": "img/m7.webp",
+   "w": 360,
+   "h": 174,
+   "available": true
+  },
+  {
+   "id": "m8",
+   "name": "14-Ingredient Dry Fruit Antinunde",
+   "size": "5 Nos.",
+   "price": 250,
+   "group": "sweets",
+   "g": 1,
+   "image": "img/m8.webp",
+   "w": 360,
+   "h": 154,
+   "available": true
+  }
+ ]
+}

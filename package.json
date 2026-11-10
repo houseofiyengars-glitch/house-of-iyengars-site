@@ -1,0 +1,7 @@
+{
+  "name": "house-of-iyengars-site",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "dependencies": { "@netlify/blobs": "^11.1.7" }
+}
