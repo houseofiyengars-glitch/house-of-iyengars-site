@@ -101,13 +101,13 @@
   {
    "id": "m8",
    "name": "14-Ingredient Dry Fruit Antinunde",
-   "size": "5 Nos.",
-   "price": 250,
+   "size": "1/4 kg",
+   "price": 375,
    "group": "sweets",
    "g": 1,
-   "image": "img/m8.webp",
-   "w": 360,
-   "h": 154,
+   "image": "img/m8v2.webp",
+   "w": 480,
+   "h": 360,
    "available": true
   }
  ]
