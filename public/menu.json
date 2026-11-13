@@ -10,8 +10,8 @@
    "group": "rice",
    "g": 0,
    "image": "img/m1.webp",
-   "w": 360,
-   "h": 209,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
@@ -22,8 +22,8 @@
    "group": "rice",
    "g": 0,
    "image": "img/m2.webp",
-   "w": 360,
-   "h": 216,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
@@ -34,8 +34,8 @@
    "group": "rice",
    "g": 0,
    "image": "img/m3.webp",
-   "w": 360,
-   "h": 213,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
@@ -46,8 +46,8 @@
    "group": "rice",
    "g": 0,
    "image": "img/m4.webp",
-   "w": 360,
-   "h": 209,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
@@ -58,8 +58,8 @@
    "group": "rice",
    "g": 0,
    "image": "img/m5.webp",
-   "w": 360,
-   "h": 216,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
@@ -70,20 +70,32 @@
    "group": "rice",
    "g": 0,
    "image": "img/m6.webp",
-   "w": 360,
-   "h": 213,
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
    "id": "m7",
    "name": "Hayagreeva",
-   "size": "350 g / 300 ml",
+   "size": "330 g / 300 ml",
    "price": 230,
    "group": "sweets",
    "g": 1,
    "image": "img/m7.webp",
-   "w": 360,
-   "h": 174,
+   "w": 480,
+   "h": 360,
+   "available": true
+  },
+  {
+   "id": "m9",
+   "name": "Rava Kesari",
+   "size": "330 g / 300 ml",
+   "price": 230,
+   "group": "sweets",
+   "g": 1,
+   "image": "img/m9.webp",
+   "w": 480,
+   "h": 360,
    "available": true
   },
   {
