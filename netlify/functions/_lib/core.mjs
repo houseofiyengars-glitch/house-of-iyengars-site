@@ -105,16 +105,37 @@ export function makeHandlers(deps) {
     } finally { clearTimeout(t); }
   }
 
-  async function verifyTurnstile(token, ip) {
-    if (env('TURNSTILE_DISABLED') === 'true') return true;
-    const secret = env('TURNSTILE_SECRET');
-    if (!secret) { log('config', { problem: 'TURNSTILE_SECRET missing - rejecting orders' }); return false; }
-    if (typeof token !== 'string' || !token || token.length > 2048) return false;
+  // ---- Turnstile diagnostics: safe by design. Never logs the token, the secret or any part of them. ----
+  const tag = v => (typeof v === 'string' ? v.replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 40) : null);
+  const hostOf = req => { try { const o = req && req.headers.get('origin'); return (o ? new URL(o) : new URL(req.url)).host.toLowerCase(); } catch { return null; } };
+  const cleanDiag = d => (!d || typeof d !== 'object') ? null : {
+    siteKeyConfigured: d.siteKeyConfigured === true, widgetState: tag(d.widgetState), widgetError: tag(d.widgetError),
+    tokenLength: Number.isInteger(d.tokenLength) && d.tokenLength >= 0 && d.tokenLength < 5000 ? d.tokenLength : null, pageHost: tag(d.pageHost) };
+
+  // Same accept/reject behaviour as before (fails closed). It now explains itself in the logs.
+  async function verifyTurnstile(token, ip, req, clientDiag) {
+    const t0 = Date.now(); const secret = env('TURNSTILE_SECRET');
+    const base = { tokenPresent: typeof token === 'string' && token.length > 0, tokenLength: typeof token === 'string' ? token.length : 0,
+      secretConfigured: !!secret, secretLength: secret ? String(secret).length : 0, requestHost: hostOf(req), client: cleanDiag(clientDiag) };
+    const note = (outcome, stage, extra) => log('turnstile', { outcome, stage, ...base, ...extra, ms: Date.now() - t0 });
+    if (env('TURNSTILE_DISABLED') === 'true') { note('skipped', 'disabled_by_setting'); return true; }
+    if (!secret) { log('config', { problem: 'TURNSTILE_SECRET missing - rejecting orders' }); note('failure', 'secret_missing'); return false; }
+    if (!base.tokenPresent) { note('failure', 'token_missing'); return false; }
+    if (token.length > 2048) { note('failure', 'token_too_long'); return false; }
+    let r;
     try {
       const form = new URLSearchParams({ secret, response: token }); if (ip) form.set('remoteip', ip);
-      const r = await deps.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
-      return !!(await r.json()).success;
-    } catch { return false; }
+      r = await deps.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form });
+    } catch (e) { note('failure', 'siteverify_unreachable', { error: tag(e && e.name) || 'error' }); return false; }
+    let j = null; try { j = await r.json(); } catch { j = null; }
+    const info = { httpStatus: r.status, cfSuccess: !!(j && j.success === true),
+      errorCodes: Array.isArray(j && j['error-codes']) ? j['error-codes'].slice(0, 10).map(tag) : [],
+      cfHostname: j && j.hostname ? String(j.hostname).toLowerCase().slice(0, 100) : null,
+      cfChallengeTs: j && j.challenge_ts ? tag(String(j.challenge_ts)) : null, cfAction: j && j.action ? tag(String(j.action)) : null };
+    info.hostnameMatchesRequest = info.cfHostname && base.requestHost ? info.cfHostname === base.requestHost : null;
+    if (j && j.success === true) { note('success', 'siteverify_success', info); return true; }
+    note('failure', j ? 'siteverify_rejected' : (r.ok ? 'siteverify_bad_response' : 'siteverify_http_error'), info);
+    return false;
   }
 
   async function order(req, ctx) {
@@ -126,7 +147,7 @@ export function makeHandlers(deps) {
     const res = validate(body, deps.menu);
     if (!res.ok) { log('rejected', { reason: 'validation', ip, fields: Object.keys(res.fields) }); return json(400, { ok: false, error: 'invalid', fields: res.fields }); }
     const v = res.v;
-    if (!(await verifyTurnstile(body.turnstileToken, ip))) { log('suspicious', { reason: 'turnstile', ip }); return json(403, { ok: false, error: 'turnstile' }); }
+    if (!(await verifyTurnstile(body.turnstileToken, ip, req, body.clientDiag))) { log('suspicious', { reason: 'turnstile', ip }); return json(403, { ok: false, error: 'turnstile' }); }
     if (v.clientTotal !== v.total) {
       log('rejected', { reason: 'price mismatch', ip, client: v.clientTotal, server: v.total });
       return json(409, { ok: false, error: 'price_changed', total: v.total, menu: deps.menu.items.map(i => ({ id: i.id, price: i.price, available: i.available !== false })) });
