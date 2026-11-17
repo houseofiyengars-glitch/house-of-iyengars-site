@@ -109,6 +109,18 @@
    "w": 480,
    "h": 360,
    "available": true
+  },
+  {
+   "id": "m10",
+   "name": "Mix Snacks",
+   "size": "500 g",
+   "price": 325,
+   "group": "sweets",
+   "g": 1,
+   "image": "img/m10b.webp",
+   "w": 480,
+   "h": 360,
+   "available": true
   }
  ]
 }

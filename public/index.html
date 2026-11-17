@@ -181,6 +181,7 @@ body.co-open{overflow:hidden}body.co-open #cartbar{display:none}
 .card2 p{margin:3px 0;font:400 14.5px/1.5 'Poppins',sans-serif;color:var(--cream);word-break:break-word}
 .card2 .row2{padding:8px 0}
 .fld{margin:12px 0 0}
+.remw{margin:16px 0 0}.remL{display:flex;gap:10px;align-items:flex-start;font:400 13.5px/1.45 'Poppins',sans-serif;color:var(--cream);cursor:pointer}.remL input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--gold)}.remL small{display:block;color:var(--muted);margin-top:2px}.remB{margin:10px 0 0;font:400 13px/1.45 'Poppins',sans-serif;color:var(--muted)}.remB[hidden]{display:none}
 .fld label{display:block;font:600 14px 'Poppins',sans-serif;margin-bottom:5px;color:var(--cream)}
 .fld label small{font-weight:400;color:var(--muted)}
 .fld input,.fld textarea{width:100%;background:#000;color:var(--cream);border:1.5px solid var(--gold2);border-radius:10px;padding:13px 12px;font:400 16px 'Poppins',sans-serif}
@@ -239,7 +240,7 @@ body.co-open{overflow:hidden}body.co-open #cartbar{display:none}
 <div class="mintro" id="menu"><ol class="stp" id="stpMenu" aria-label="Order progress"></ol><p class="ins">Choose your favourites to get started. Tap <b>ADD TO CART</b> on any dish, then open your cart.</p></div>
 <div class="sec"><h2 class="gold">HERITAGE RICE SPECIALITIES</h2></div>
 <div class="grid" id="grid"></div>
-<div class="sec" id="sw2"><h2 class="gold">HERITAGE SWEETS &amp; SPECIALITIES</h2></div>
+<div class="sec" id="sw2"><h2 class="gold">HERITAGE SWEETS &amp; SNACKS</h2></div>
 <div class="grid" id="grid2"></div>
 <div class="sec"><h2 class="gold">COMING SOON</h2></div>
 <ul class="soon"><li>Aviyal</li><li>Moorkolumbu</li><li>Porchukutu</li><li>Menthya kolumbu</li><li>Vatha kolumbu</li><li>Bisi Bele bath</li><li>Kadamba Sadam</li></ul>
@@ -317,6 +318,8 @@ body.co-open{overflow:hidden}body.co-open #cartbar{display:none}
    <div class="clr2"><button type="button" class="pill" id="gps">📍 Use my location</button><button type="button" class="pill" id="clra">Clear address</button></div>
    <p class="fh" id="dst" style="color:var(--muted)"></p></div>
   <div class="fld"><label for="di">Delivery instructions <small>(optional)</small></label><textarea id="di" rows="2" maxlength="200" placeholder="e.g. Call on arrival, leave with security"></textarea></div>
+  <div class="remw"><label class="remL" for="rem"><input type="checkbox" id="rem" checked><span>Remember my name, mobile number and address on this phone<small>Saved only on this phone, never on our servers. It makes your next order faster.</small></span></label>
+   <p class="remB" id="remB" hidden>Welcome back! We filled in your saved details. Please check them before you continue. <button type="button" class="lnk" id="remClr">Clear saved details</button></p></div>
   <div class="cta"><button class="btn" id="toRev" type="button">CONTINUE TO ORDER SUMMARY</button><button class="btn2" id="detBack" type="button">BACK TO CART</button></div>
  </section>
 
@@ -368,9 +371,11 @@ var $=function(i){return document.getElementById(i)};
 var ISM=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 var WA='918792111007',KIT={lat:13.0274375,lng:77.5759375},LIM=4,SK='hoi_checkout_v1',TTL=2*3600*1000;
 var MENU=[],BY={},q={},step='menu',det={n:'',p:'',a:'',i:''},GEO={km:null},RID=null,ORD=null;
-var BUSY=false,tsTok=null,tsId=null,tsLoading=false,SCROLL=0,hn=0,stk=['menu'],gseq=0,gtm=null,newTap=0;
+var BUSY=false,tsTok=null,tsId=null,tsLoading=false,tsState='none',tsErr=null,tsWarned=false,SCROLL=0,hn=0,stk=['menu'],gseq=0,gtm=null,newTap=0;
 var IDX={menu:0,cart:1,details:2,review:3,confirm:4},PANELS={cart:'pCart',details:'pDet',review:'pRev',confirm:'pConf'};
 var LAB=['MENU','CART','DETAILS','REVIEW','CONFIRMATION'],MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var HOK=true,navTok=0;
+function hist(m,st,url){try{history[m+'State'](st,'',url);return true}catch(e){HOK=false;return false}}
 var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var inr=function(n){return '₹'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',')};
 var pad=function(n){return String(n).padStart(2,'0')};
@@ -378,6 +383,12 @@ var pad=function(n){return String(n).padStart(2,'0')};
 /* ---------- session (this browser tab only, 2 hours, cleared after a finished order) ---------- */
 function save(){try{sessionStorage.setItem(SK,JSON.stringify({t:Date.now(),q:q,step:step,det:det,geo:GEO,rid:RID,ord:ORD}))}catch(e){}}
 function wipe(){try{sessionStorage.removeItem(SK)}catch(e){}}
+/* ---------- saved details (this phone only, localStorage, never sent anywhere until you place an order) ---------- */
+var PK='hoi_profile_v1',PTTL=180*86400000,remOff=false,profShown=false;
+function profGet(){try{var p=JSON.parse(localStorage.getItem(PK)||'null');if(p&&typeof p==='object'&&p.n&&/^\d{10}$/.test(String(p.p||''))&&p.a&&Date.now()-(p.t||0)<PTTL)return p;if(p)localStorage.removeItem(PK)}catch(e){}return null}
+function profSave(){try{if(remOff)localStorage.removeItem(PK);else localStorage.setItem(PK,JSON.stringify({n:det.n,p:phoneN(),a:det.a,t:Date.now()}))}catch(e){}}
+function profClear(){try{localStorage.removeItem(PK)}catch(e){}}
+function profApply(){var p=profGet();if(!p||det.n||det.p||det.a)return false;det.n=p.n;det.p=p.p;det.a=p.a;profShown=true;return true}
 function restore(){try{var s=JSON.parse(sessionStorage.getItem(SK)||'null');if(!s||Date.now()-s.t>TTL){wipe();return null}return s}catch(e){return null}}
 
 /* ---------- time (Indian Standard Time) ---------- */
@@ -439,6 +450,7 @@ function hashStep(){var h=location.hash.replace('#','');return(h==='cart'||h==='
 function showOverlay(){var co=$('co');if(co.hidden){SCROLL=window.pageYOffset;co.hidden=false;document.body.classList.add('co-open')}}
 function hideOverlay(){var co=$('co');if(!co.hidden){co.hidden=true;document.body.classList.remove('co-open')}}
 function go(s,mode){
+  navTok++;
   if(s==='confirm'&&!ORD)s=count()?'review':'menu';
   if(s!=='menu'&&s!=='confirm'&&!count())s=ORD?'confirm':'menu';
   if(s==='review'&&!validDet(false))s='details';
@@ -448,14 +460,14 @@ function go(s,mode){
   stepper($('stp'),IDX[s]);stepper($('stpMenu'),0);
   $('coBack').hidden=(s==='confirm');$('coTitle').textContent={cart:'Your cart',details:'Delivery details',review:'Order summary',confirm:'Order confirmation'}[s]||'Your order';
   var url=location.pathname+location.search+(s==='menu'?'':'#'+s);
-  if(mode==='pop'){hn=(history.state&&history.state.n)||0;stk=stk.slice(0,hn+1);stk[hn]=s;if(history.state&&history.state.s!==s)history.replaceState({s:s,n:hn},'',url)}
-  else if(mode==='replace'){history.replaceState({s:s,n:hn},'',url);stk[hn]=s}
-  else{stk=stk.slice(0,hn+1);stk.push(s);hn=stk.length-1;history.pushState({s:s,n:hn},'',url)}
+  if(mode==='pop'){hn=(history.state&&history.state.n)||0;stk=stk.slice(0,hn+1);stk[hn]=s;if(history.state&&history.state.s!==s)hist('replace',{s:s,n:hn},url)}
+  else if(mode==='replace'){hist('replace',{s:s,n:hn},url);stk[hn]=s}
+  else{stk=stk.slice(0,hn+1);stk.push(s);hn=stk.length-1;hist('push',{s:s,n:hn},url)}
   refreshAll();save();
   if(s!=='menu'){$('co').scrollTop=0;setTimeout(function(){var h=document.querySelector('#'+PANELS[s]+' .phd:not([hidden])')||document.querySelector('#'+PANELS[s]+' .phd');if(s==='confirm'&&ORD&&ORD.opened)h=$('poH');if(h&&h.focus)h.focus({preventScroll:true})},40)}
   else if(prev!=='menu'){window.scrollTo(0,SCROLL)}
 }
-function back(target){if(stk.length>1&&stk[stk.length-2]===target&&hn===stk.length-1){history.back()}else go(target)}
+function back(target){if(HOK&&stk.length>1&&stk[stk.length-2]===target&&hn===stk.length-1){var tok=navTok;history.back();setTimeout(function(){if(navTok===tok)go(target,'replace')},600)}else go(target,HOK?undefined:'replace')}
 function scrollMenu(){var m=$('menu');if(m&&m.scrollIntoView)m.scrollIntoView({behavior:'smooth',block:'start'})}
 
 /* ---------- details ---------- */
@@ -464,7 +476,7 @@ function phoneN(){return det.p.replace(/[\s-]/g,'')}
 function fieldErrs(){var e={};if(!NAME_RE.test(det.n))e.n='Please enter your name.';if(!/^\d{10}$/.test(phoneN()))e.p='Mobile number must be exactly 10 digits. Please revise it.';if(det.a.length<15||!/\b\d{6}\b/.test(det.a))e.a='Please enter your full address with house number, street, area and 6-digit pincode.';return e}
 function showErrs(e){[['n','dn','en'],['p','dp','ep'],['a','da','ea']].forEach(function(x){$(x[2]).textContent=e[x[0]]||'';$(x[1]).setAttribute('aria-invalid',e[x[0]]?'true':'false')})}
 function validDet(show){var e=fieldErrs();if(show)showErrs(e);return !Object.keys(e).length}
-function fillDet(){$('dn').value=det.n;$('dp').value=det.p;$('da').value=det.a;$('di').value=det.i;showDst()}
+function fillDet(){$('dn').value=det.n;$('dp').value=det.p;$('da').value=det.a;$('di').value=det.i;showDst();$('rem').checked=!remOff;$('remB').hidden=!(profShown&&profGet());if(det.a&&GEO.km==null&&!gtm)gAddr()}
 function readDet(){det.n=$('dn').value.trim().replace(/\s+/g,' ');det.p=$('dp').value.trim();det.a=$('da').value.trim().replace(/\s+/g,' ');det.i=$('di').value.trim()}
 
 /* ---------- review ---------- */
@@ -473,11 +485,11 @@ function renderReview(){var ids=Object.keys(q).filter(function(i){return BY[i]})
   $('rvTot').textContent=inr(total());$('rvFee').textContent=feeTxt(total());$('rvDist').textContent=distTxt();
   var d=delDate();$('rvDate').textContent=d.same?'Delivery date: today, '+d.label+' (before 1:30 PM)':'Delivery date: tomorrow, '+d.label+' (orders after 10:00 AM are delivered the next day)';
   $('rvCust').innerHTML='<p><b>'+esc(det.n)+'</b></p><p>'+esc(phoneN())+'</p><p>'+esc(det.a)+'</p>'+(det.i?'<p>Instructions: '+esc(det.i)+'</p>':'')}
-function loadTs(){if(!CFG.turnstileSiteKey)return;if(window.turnstile){renderTs();return}if(tsLoading)return;tsLoading=true;
+function loadTs(){if(!CFG.turnstileSiteKey){tsState='none';if(!tsWarned){tsWarned=true;console.warn('[turnstile] No site key is configured in this page, so orders are sent without a security token.')}return}if(window.turnstile){renderTs();return}if(tsLoading)return;tsLoading=true;tsState='loading';
   var s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;
-  s.onload=function(){tsLoading=false;renderTs()};s.onerror=function(){tsLoading=false;showAlert('rvErr','The security check could not load. Please check your connection and try again.',[['TRY AGAIN',function(){clearAlert();loadTs()},true]])};document.head.appendChild(s)}
-function renderTs(){if(!window.turnstile||tsId!==null)return;tsId=window.turnstile.render('#ts',{sitekey:CFG.turnstileSiteKey,appearance:'interaction-only',callback:function(t){tsTok=t},'expired-callback':function(){tsTok=null},'error-callback':function(){tsTok=null}})}
-function resetTs(){tsTok=null;try{if(window.turnstile&&tsId!==null)window.turnstile.reset(tsId)}catch(e){}}
+  s.onload=function(){tsLoading=false;renderTs()};s.onerror=function(){tsLoading=false;tsState='error';tsErr='script_load_failed';console.warn('[turnstile] The Turnstile script could not be loaded.');showAlert('rvErr','The security check could not load. Please check your connection and try again.',[['TRY AGAIN',function(){clearAlert();loadTs()},true]])};document.head.appendChild(s)}
+function renderTs(){if(!window.turnstile||tsId!==null)return;tsState='rendered';tsId=window.turnstile.render('#ts',{sitekey:CFG.turnstileSiteKey,appearance:'interaction-only',callback:function(t){tsTok=t;tsState='solved';tsErr=null;console.info('[turnstile] token received, length '+String(t).length)},'expired-callback':function(){tsTok=null;tsState='expired';console.info('[turnstile] token expired, waiting for a new one')},'error-callback':function(c){tsTok=null;tsState='error';tsErr=String(c||'unknown').replace(/[^A-Za-z0-9_.:-]/g,'').slice(0,40);console.warn('[turnstile] widget error code: '+tsErr)}})}
+function resetTs(){tsTok=null;if(tsState==='solved')tsState='reset';try{if(window.turnstile&&tsId!==null)window.turnstile.reset(tsId)}catch(e){}}
 function clearAlert(){$('rvErr').innerHTML=''}
 function showAlert(id,msg,actions){var el=$(id);el.innerHTML='<div class="alert"><p>'+esc(msg)+'</p><div class="alrow"></div></div>';var row=el.querySelector('.alrow');
   actions.forEach(function(a){var b=document.createElement('button');b.type='button';b.className=a[2]?'btn':'btn2';b.textContent=a[0];if(a[3])b.disabled=true;b.onclick=a[1];row.appendChild(b)});
@@ -496,7 +508,7 @@ async function confirmOrder(){
   var sg=sig();if(!RID||RID.sig!==sg||Date.now()-RID.t>600000){RID={id:newId(),sig:sg,t:Date.now()}}save();
   setBusy(true,'Creating your order…');
   var ctl=new AbortController(),tm=setTimeout(function(){ctl.abort()},30000),res=null,j=null,net=false;
-  try{res=await fetch(CFG.orderEndpoint||'/api/order',{method:'POST',headers:{'content-type':'application/json'},signal:ctl.signal,body:JSON.stringify({requestId:RID.id,turnstileToken:tsTok||'',items:Object.keys(q).map(function(id){return{id:id,q:q[id]}}),customer:{name:det.n,phone:phoneN(),address:det.a,instructions:det.i},delivery:{zone:zone(),km:GEO.km},clientTotal:total()})});
+  try{res=await fetch(CFG.orderEndpoint||'/api/order',{method:'POST',headers:{'content-type':'application/json'},signal:ctl.signal,body:JSON.stringify({requestId:RID.id,turnstileToken:tsTok||'',clientDiag:{siteKeyConfigured:!!CFG.turnstileSiteKey,widgetState:tsState,widgetError:tsErr,tokenLength:(tsTok||'').length,pageHost:location.hostname},items:Object.keys(q).map(function(id){return{id:id,q:q[id]}}),customer:{name:det.n,phone:phoneN(),address:det.a,instructions:det.i},delivery:{zone:zone(),km:GEO.km},clientTotal:total()})});
     try{j=await res.json()}catch(e){j=null}}catch(e){net=true}
   clearTimeout(tm);setBusy(false);resetTs();
   if(net||!res){return failUi(null)}
@@ -547,7 +559,7 @@ function showPost(){var o=ORD;$('cfMain').hidden=true;$('pPost').hidden=false;
 function markOpened(){if(!ORD||ORD.opened)return;ORD.opened=true;save();
   if(ORD.st==='registered'){try{fetch(CFG.handoffEndpoint||'/api/handoff',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({orderId:ORD.id,requestId:ORD.rid,status:'Opened'})}).catch(function(){})}catch(e){}}
   setTimeout(function(){if(ORD&&step==='confirm'){showPost();$('co').scrollTop=0;var h=$('poH');if(h)h.focus({preventScroll:true})}},350)}
-function newOrder(){q={};det={n:'',p:'',a:'',i:''};GEO={km:null};RID=null;ORD=null;wipe();drawMenu();go('menu','replace');setTimeout(scrollMenu,60)}
+function newOrder(){q={};det={n:'',p:'',a:'',i:''};GEO={km:null};RID=null;ORD=null;profShown=false;profApply();wipe();drawMenu();go('menu','replace');setTimeout(scrollMenu,60)}
 
 /* ---------- wiring ---------- */
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-act]');if(!b)return;var a=b.dataset.act,id=b.dataset.id;
@@ -559,8 +571,10 @@ $('coX').onclick=function(){go('menu')};
 $('toDet').onclick=function(){go('details')};
 $('contShop').onclick=function(){go('menu');setTimeout(scrollMenu,60)};
 $('detBack').onclick=function(){back('cart')};
-$('toRev').onclick=function(){readDet();var e=fieldErrs();showErrs(e);var k=['n','p','a'].filter(function(x){return e[x]})[0];if(k){$({n:'dn',p:'dp',a:'da'}[k]).focus();return}go('review')};
+$('toRev').onclick=function(){readDet();var e=fieldErrs();showErrs(e);var k=['n','p','a'].filter(function(x){return e[x]})[0];if(k){$({n:'dn',p:'dp',a:'da'}[k]).focus();return}remOff=!$('rem').checked;profSave();go('review')};
 $('revBack').onclick=function(){back('details')};
+$('rem').addEventListener('change',function(){remOff=!this.checked;if(remOff){profClear();$('remB').hidden=true}});
+$('remClr').onclick=function(){profClear();profShown=false;det={n:'',p:'',a:'',i:det.i};GEO={km:null};fillDet();dst('');['en','ep','ea'].forEach(function(i){$(i).textContent=''});save();$('dn').focus()};
 $('editCart').onclick=function(){go('cart')};
 $('editDet').onclick=function(){go('details')};
 $('confirm').onclick=confirmOrder;
@@ -591,6 +605,7 @@ try{localStorage.removeItem('hoi_d');sessionStorage.removeItem('hoi_rid')}catch(
 stepper($('stpMenu'),0);
 var saved=restore();
 if(saved){q=saved.q||{};det=Object.assign({n:'',p:'',a:'',i:''},saved.det||{});GEO=saved.geo||{km:null};RID=saved.rid||null;ORD=saved.ord||null}
+profApply();
 loadMenu().then(function(ok){if(!ok)return;hn=(history.state&&history.state.n)||0;stk=new Array(hn+1).fill('menu');go(hashStep(),'replace')});
 })();
 </script>
